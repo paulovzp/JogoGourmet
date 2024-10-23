@@ -30,7 +30,14 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
             ExibirMsgInicial();
             var tiposPratos = GetTipoPratosOrdernados();
             bool acertei = TentarAdivinhar(tiposPratos);
-            AdicionarNovaOpcao(acertei);
+            if (acertei)
+            {
+                ExibirAcertei();
+                Thread.Sleep(3000);
+            }
+            else
+                AdicionarNovaOpcao();
+
             Console.Clear();
         }
     }
@@ -40,10 +47,8 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
     /// TO DO : Aproveitar os tipos que já existe e inserir um novo prato, não precisa criar um novo tipo toda vez.
     /// </summary>
     /// <param name="acertei"></param>
-    private void AdicionarNovaOpcao(bool acertei)
+    private void AdicionarNovaOpcao()
     {
-        if (acertei) return;
-
         var boloChocolate = _context.GetBoloChocolate();
         var prato = GetRespostaTexto(QualPratoPensou);
         var tipoPrato = GetRespostaTexto(string.Format(DiferencaEntre, prato, boloChocolate.Nome));
@@ -89,7 +94,6 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
             var message = string.Format(OPratoQueVocêPensou, prato.Nome);
             if (GetResposta(message))
             {
-                ExibirAcertei();
                 return true;
             }
         }
@@ -132,7 +136,7 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
             }
             else
             {
-                ShowInvalidMsgAndWait();
+                ApresentarMensagemInvalida();
             }
         }
     }
@@ -155,7 +159,7 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
         }
     }
 
-    private static void ShowInvalidMsgAndWait()
+    private static void ApresentarMensagemInvalida()
     {
         Console.WriteLine("Resposta inválida");
         Console.WriteLine();
