@@ -66,25 +66,15 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
     {
         foreach (var tipoPrato in tiposPratos.OrderBy(x => x.Order))
         {
-            if (TentarAdivinharTipo(tipoPrato))
+            if (!string.IsNullOrEmpty(tipoPrato.Nome))
             {
-                return true;
+                var messageTipo = string.Format(OPratoQueVocêPensou, tipoPrato.Nome);
+                if (!GetResposta(messageTipo))
+                    continue;
             }
+            return TentarAdivinharPrato(tipoPrato.Pratos);
         }
         return false;
-    }
-
-    private bool TentarAdivinharTipo(TipoPrato tipoPrato)
-    {
-        if (!string.IsNullOrEmpty(tipoPrato.Nome))
-        {
-            var messageTipo = string.Format(OPratoQueVocêPensou, tipoPrato.Nome);
-            if (!GetResposta(messageTipo))
-            {
-                return false;
-            }
-        }
-        return TentarAdivinharPrato(tipoPrato.Pratos);
     }
 
     private bool TentarAdivinharPrato(IEnumerable<Prato> pratos)
