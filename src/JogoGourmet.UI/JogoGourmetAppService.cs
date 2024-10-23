@@ -1,5 +1,6 @@
 ﻿using JogoGourmet.Domain;
 using JogoGourmet.Persistence;
+using JogoGourmet.UI.Models;
 
 namespace JogoGourmet.UI;
 
@@ -12,7 +13,7 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
 {
     private readonly JogoGourmetContext _context;
 
-    public const string DiferencaEntre = "{0} é ________ mas {1} não: ";
+    public const string DiferencaEntre = "{0} é ________ mas {1} não:";
     public const string Acertei = "Acertei de novo!";
     public const string PenseEmUmPrato = "Pense em um prato que você gosta";
     public const string QualPratoPensou = "Qual prato você pensou?";
@@ -29,14 +30,14 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
         {
             ExibirMsgInicial();
             var tiposPratos = GetTipoPratosOrdernados();
-            bool acertei = TentarAdivinhar(tiposPratos);
-            if (acertei)
+            var result = TentarAdivinhar(tiposPratos);
+            if (result.Acertei)
             {
                 ExibirAcertei();
                 Thread.Sleep(3000);
             }
             else
-                AdicionarNovaOpcao();
+                AdicionarNovaOpcao(result);
 
             Console.Clear();
         }
@@ -47,11 +48,10 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
     /// TO DO : Aproveitar os tipos que já existe e inserir um novo prato, não precisa criar um novo tipo toda vez.
     /// </summary>
     /// <param name="acertei"></param>
-    private void AdicionarNovaOpcao()
+    private void AdicionarNovaOpcao(JogoGourmetResult result)
     {
-        var boloChocolate = _context.GetBoloChocolate();
         var prato = GetRespostaTexto(QualPratoPensou);
-        var tipoPrato = GetRespostaTexto(string.Format(DiferencaEntre, prato, boloChocolate.Nome));
+        var tipoPrato = GetRespostaTexto(string.Format(DiferencaEntre, prato, result.TipoPratoComparador));
         InserirNovoTipo(prato, tipoPrato);
     }
 
@@ -62,7 +62,7 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
         _context.AddTipoPrato(novoTipoPrato);
     }
 
-    private bool TentarAdivinhar(List<TipoPrato> tiposPratos)
+    private JogoGourmetResult TentarAdivinhar(List<TipoPrato> tiposPratos)
     {
         foreach (var tipoPrato in tiposPratos.OrderBy(x => x.Order))
         {
@@ -72,22 +72,25 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
                 if (!GetResposta(messageTipo))
                     continue;
             }
-            return TentarAdivinharPrato(tipoPrato.Pratos);
+            return TentarAdivinharPrato(tipoPrato);
         }
-        return false;
+        return new JogoGourmetResult(false, string.Empty);
     }
 
-    private bool TentarAdivinharPrato(IEnumerable<Prato> pratos)
+    private JogoGourmetResult TentarAdivinharPrato(TipoPrato tipoPrato)
     {
-        foreach (var prato in pratos)
+        var currentPrato = string.Empty;
+        foreach (var prato in tipoPrato.Pratos)
         {
-            var message = string.Format(OPratoQueVocêPensou, prato.Nome);
+            currentPrato = prato.Nome;
+            var message = string.Format(OPratoQueVocêPensou, currentPrato);
             if (GetResposta(message))
             {
-                return true;
+                return new JogoGourmetResult(true, string.Empty);
             }
         }
-        return false;
+
+        return new JogoGourmetResult(false, currentPrato);
     }
 
     private void ExibirAcertei()
@@ -135,6 +138,7 @@ internal class JogoGourmetAppService : IJogoGourmetAppService
     {
         while (true)
         {
+            Console.WriteLine();
             Console.Write(message);
             string? resposta = Console.ReadLine()?.Trim();
 
